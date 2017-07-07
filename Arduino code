@@ -1,0 +1,127 @@
+%Author:  Sayed hasnat  
+%         EEE, Khulna University of Engineering & Technology, khulna, Bangladesh.
+%        e-mail: sayedhasnat6[at]gmail[dot]com
+
+
+#include <Servo.h> 
+Servo myservo;
+
+int switc=13;
+int sens1=A0;
+int sens2=A1;
+int servo_pin=10;
+
+int a,b;
+  
+#define Password_Lenght 7
+char Data[Password_Lenght]; // 6 is the number of chars it can hold + the null char = 7
+char Master[Password_Lenght] = "123456"; 
+byte data_count = 0, master_count = 0;
+char customKey;
+int thresh1=400;
+int thresh2=500;
+int person=0;
+void setup(){
+  pinMode(sens1,INPUT);
+  pinMode(switc,OUTPUT);
+  pinMode(sens2,INPUT);
+  myservo.attach(servo_pin);
+  myservo.write(90);  // set servo to mid-point
+  
+  Serial.begin(9600);
+  Serial.println("Hello");
+
+}
+
+void loop(){
+  delay(1000);
+  Serial.print("person=");
+  Serial.println(person);
+  int c=digitalRead(switc);
+  Serial.println(c); // it's for internal switch
+  if(c==HIGH){
+    counter();
+    delay(1000);
+  }
+  else if(person<5){
+  
+  Serial.println("Enter Password");
+  if (Serial.available()>0) // makes sure a key is actually pressed, equal to (customKey != NO_KEY)
+  {
+    Data[data_count] = Serial.read(); // store char into data array
+    
+    //Serial.print(Data[data_count]); // print char at said cursor
+    data_count++; // increment data array by 1 to store new char, also keep track of the number of chars entered
+    for(int lp=1;lp<=6;lp++){
+      if (Serial.available()>0) // makes sure a key is actually pressed, equal to (customKey != NO_KEY)
+  {
+    Data[data_count] = Serial.read(); 
+    
+    //Serial.print(Data[data_count]); 
+    data_count++;
+  }
+    }
+  }
+
+  if(data_count == Password_Lenght-1) // if the array index is equal to the number of expected chars, compare data to master
+  {
+    //Serial.println("Password is ");
+    if(!strcmp(Data, Master)) // equal to (strcmp(Data, Master) == 0)
+      {Serial.println("Congrats");
+      counter();
+    }
+    else
+      Serial.println("Failed");
+    delay(1000);// added 1 second delay to make sure the password is completely shown on screen before it gets cleared.
+    clearData();   
+  }
+  }
+}
+
+void clearData()
+{
+  while(data_count !=0)
+  {   // This is used for any array size, 
+    Data[data_count--] = 0; //clear array for new data
+  }
+  return;
+}
+void counter(){
+  for(int j=0;j<20;j++){
+    delay(500);
+    a=analogRead(sens1);
+    Serial.print("S1=");
+    Serial.println(a);
+    b=analogRead(sens2);
+    Serial.print("S2=");
+    Serial.println(b);
+  if(a<thresh1){
+    myservo.write(179);
+    for(int i=0;i<20;i++){
+    delay(500);
+    b=analogRead(sens2);
+    Serial.print("S2=");
+    Serial.println(b);
+    if(b<thresh2){
+      person++;
+      myservo.write(90);
+      break;
+    }
+  }
+  break;
+  }
+  else if(b<thresh2){
+    myservo.write(179);
+    for(int i=0;i<20;i++){
+    delay(500);
+    a=analogRead(sens1);
+    if(a<thresh1){
+      person--;
+      myservo.write(90);
+      break;
+    }
+  }
+  break;
+  }
+  }
+}
